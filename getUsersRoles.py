@@ -62,16 +62,14 @@ def user_roles_to_excel(port,applicationName, salesOrg,resultset,roles_result):
             email = users[j]["emails"][0]["address"]
             if "userSalesOrgRoles" in users[j]["roles"] and len(users[j]["roles"]["userSalesOrgRoles"]) > 0: currentSheet, email, row = write_roles(currentSheet, users[j]["roles"]["userSalesOrgRoles"], email, row, roles_result,salesOrg)
             if "userRoles" in users[j]["roles"] and len(users[j]["roles"]["userRoles"]) > 0: currentSheet, email, row = write_roles(currentSheet, users[j]["roles"]["userRoles"], email, row, roles_result,salesOrg)
+    return resultset
     #     print("loop out \"roles_to_excell inner loop\" \n")    
     # print("loop out \"roles_to_excell outer loop\" \n")
 def multiple_sales_org(port, applicationName,salesOrgls,resultset,roles_result):
-    for i in range(len(salesOrgls)):user_roles_to_excel(port,applicationName, salesOrgls[i],resultset,roles_result)
+    for i in range(len(salesOrgls)):resultset = user_roles_to_excel(port,applicationName, salesOrgls[i],resultset,roles_result)
+    return resultset
 
 #End of Method Library
-
-
-
-
 
 
 # MAIN
@@ -79,13 +77,14 @@ def multiple_sales_org(port, applicationName,salesOrgls,resultset,roles_result):
 # Creating Excel file and sheets
 resultset = create_xlsx()
 
+
 # Getting user inputs
 port, applicationName, salesOrgls,roles_result = user_inputs()
 print("\nExtracting roles to \"users_result_set.xlsx\", please wait...")
 # case of result with multiple sales orgs
-if len(salesOrgls) > 1: multiple_sales_org(port, applicationName,salesOrgls, resultset,roles_result)  
+if len(salesOrgls) > 1: resultset = multiple_sales_org(port, applicationName,salesOrgls, resultset,roles_result)  
 
 # case of a single sales org
-else: user_roles_to_excel(port, applicationName,salesOrgls[0], resultset,roles_result)
-input("\nOperation complete! press \"enter\" to close this screen") 
+else: resultset = user_roles_to_excel(port, applicationName,salesOrgls[0], resultset,roles_result)
 resultset.close()
+input("\nOperation complete! press \"enter\" to close this screen") 
