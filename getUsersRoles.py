@@ -24,6 +24,25 @@ def user_inputs():
     roles_result = roles.upper().split()
     return port, applicationName, sales_org_result,roles_result
 
+def write_roles(currentSheet,roles, email, row,roles_result,salesOrg):
+    for k in range(len(roles)):
+                # this if is necessary because the request sends some results that dont match the configurations made in the url
+                if (
+                roles[k]["role"]["applicationCode"] == applicationName.upper() and "salesOrgCode" not in roles[k]) or (
+                roles[k]["role"]["applicationCode"] == applicationName.upper() and roles[k]["salesOrgCode"] == salesOrg.upper()): 
+                    if(str(roles_result[0]) == "ALL" and len(roles_result) == 1):
+                        currentSheet.write(row, 0, email)
+                        currentSheet.write(row, 1,roles[k]["role"]["roleName"])
+                        row += 1
+                    else:
+                        if(str(roles[k]["role"]["roleName"]).upper() in roles_result):
+                            currentSheet.write(row, 0, email)
+                            currentSheet.write(row, 1,roles[k]["role"]["roleName"])
+                            row += 1
+    # print("loop out \"write roles\" \n")
+    return currentSheet, email, row
+
+
 def user_roles_to_excel(port,applicationName, salesOrg,resultset,roles_result):
     row = 0
     currentSheet = resultset.add_worksheet(salesOrg)
@@ -41,39 +60,32 @@ def user_roles_to_excel(port,applicationName, salesOrg,resultset,roles_result):
         users = page["content"]
         for j in range(len(users)): # used to iterate between the users in the response
             email = users[j]["emails"][0]["address"]
-            roles = users[j]["roles"]["userSalesOrgRoles"]
-            for k in range(len(roles)):
-                # this if is necessary because the request sends some results that dont match the configurations made in the url
-                if (
-                roles[k]["role"]["applicationCode"] == applicationName.upper() and "salesOrgCode" not in roles[k]) or (
-                roles[k]["role"]["applicationCode"] == applicationName.upper() and roles[k]["salesOrgCode"] == salesOrg.upper()): 
-                    if(str(roles_result[0]) == "ALL" and len(roles_result) == 1):
-                        currentSheet.write(row, 0, email)
-                        currentSheet.write(row, 1,roles[k]["role"]["roleName"])
-                        row += 1
-                    else:
-                        if(str(roles[k]["role"]["roleName"]).upper() in roles_result):
-                            currentSheet.write(row, 0, email)
-                            currentSheet.write(row, 1,roles[k]["role"]["roleName"])
-                            row += 1
-
-    
-
+            if "userSalesOrgRoles" in users[j]["roles"] and len(users[j]["roles"]["userSalesOrgRoles"]) > 0: currentSheet, email, row = write_roles(currentSheet, users[j]["roles"]["userSalesOrgRoles"], email, row, roles_result,salesOrg)
+            if "userRoles" in users[j]["roles"] and len(users[j]["roles"]["userRoles"]) > 0: currentSheet, email, row = write_roles(currentSheet, users[j]["roles"]["userRoles"], email, row, roles_result,salesOrg)
+    #     print("loop out \"roles_to_excell inner loop\" \n")    
+    # print("loop out \"roles_to_excell outer loop\" \n")
 def multiple_sales_org(port, applicationName,salesOrgls,resultset,roles_result):
     for i in range(len(salesOrgls)):user_roles_to_excel(port,applicationName, salesOrgls[i],resultset,roles_result)
 
+#End of Method Library
 
+
+
+
+
+
+# MAIN
+ 
 # Creating Excel file and sheets
 resultset = create_xlsx()
 
 # Getting user inputs
 port, applicationName, salesOrgls,roles_result = user_inputs()
-print("\nExtracting roles to an excel file, please wait...")
+print("\nExtracting roles to \"users_result_set.xlsx\", please wait...")
 # case of result with multiple sales orgs
 if len(salesOrgls) > 1: multiple_sales_org(port, applicationName,salesOrgls, resultset,roles_result)  
 
 # case of a single sales org
-else: user_roles_to_excel(port, applicationName,salesOrgls[0], resultset,roles_result) 
-print("\nOperation complete!")
+else: user_roles_to_excel(port, applicationName,salesOrgls[0], resultset,roles_result)
+input("\nOperation complete! press \"enter\" to close this screen") 
 resultset.close()
-
